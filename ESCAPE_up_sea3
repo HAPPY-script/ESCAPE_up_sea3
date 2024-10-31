@@ -1,0 +1,101 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Tạo GUI thông báo
+local ScreenGui = Instance.new("ScreenGui")
+local EscapeFrame = Instance.new("Frame")
+local EscapeText = Instance.new("TextLabel")
+local EscapeButton = Instance.new("TextButton")
+
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+-- Cấu hình Frame (menu thoát hiểm)
+EscapeFrame.Size = UDim2.new(0, 200, 0, 100)
+EscapeFrame.Position = UDim2.new(1, 0, 0.8, 0) -- Ban đầu nằm ngoài màn hình
+EscapeFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+EscapeFrame.BackgroundTransparency = 0.3
+EscapeFrame.BorderSizePixel = 0
+EscapeFrame.Parent = ScreenGui
+
+-- Cấu hình TextLabel cho câu hỏi
+EscapeText.Size = UDim2.new(1, 0, 0.6, 0)
+EscapeText.Position = UDim2.new(0, 0, 0, 0)
+EscapeText.BackgroundTransparency = 1
+EscapeText.Text = "Do you want to escape?"
+EscapeText.TextColor3 = Color3.fromRGB(255, 255, 255)
+EscapeText.Font = Enum.Font.SourceSansBold
+EscapeText.TextSize = 18
+EscapeText.Parent = EscapeFrame
+
+-- Cấu hình nút thoát hiểm
+EscapeButton.Size = UDim2.new(0.8, 0, 0.3, 0)
+EscapeButton.Position = UDim2.new(0.1, 0, 0.65, 0)
+EscapeButton.BackgroundColor3 = Color3.fromRGB(255, 69, 0)
+EscapeButton.Text = "Escape"
+EscapeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+EscapeButton.Font = Enum.Font.SourceSansBold
+EscapeButton.TextSize = 18
+EscapeButton.Parent = EscapeFrame
+
+local displayed = false -- Đánh dấu trạng thái hiển thị của menu
+
+-- Hàm thoát hiểm
+local function activateEscape()
+    local pos1 = Vector3.new(-12463.60, 376.29, -7566.08)
+    local pos2 = Vector3.new(5315.46, 24.31, -134.44)
+    local playerPos = character:WaitForChild("HumanoidRootPart").Position
+
+    -- Tính khoảng cách tới từng vị trí và chọn vị trí xa nhất
+    local distance1 = (playerPos - pos1).Magnitude
+    local distance2 = (playerPos - pos2).Magnitude
+
+    local targetPos = distance1 > distance2 and pos1 or pos2
+
+    -- Dịch chuyển nhân vật tới vị trí xa nhất
+    character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetPos)
+end
+
+-- Hàm kiểm tra máu và xử lý hiển thị thông báo
+local function checkHealth()
+    local healthRatio = humanoid.Health / humanoid.MaxHealth
+
+    if healthRatio < 0.2 and humanoid.Health > 0 then
+        -- Tự động thoát hiểm khi máu dưới 20%
+        activateEscape()
+    elseif healthRatio < 0.5 and humanoid.Health > 0 and not displayed then
+        -- Hiển thị menu thoát hiểm bằng hiệu ứng trượt khi máu dưới 50%
+        displayed = true
+        EscapeFrame:TweenPosition(UDim2.new(0.75, 0, 0.8, 0), "Out", "Quad", 0.5, true)
+    elseif (healthRatio >= 0.5 or humanoid.Health <= 0) and displayed then
+        -- Ẩn menu thoát hiểm bằng hiệu ứng trượt khi máu trên 50% hoặc khi chết
+        displayed = false
+        EscapeFrame:TweenPosition(UDim2.new(1, 0, 0.8, 0), "Out", "Quad", 0.5, true)
+    end
+end
+
+-- Hàm cập nhật humanoid và sự kiện khi nhân vật hồi sinh
+local function onCharacterAdded(newCharacter)
+    character = newCharacter
+    humanoid = character:WaitForChild("Humanoid")
+
+    humanoid.HealthChanged:Connect(checkHealth)
+    humanoid.Died:Connect(function()
+        displayed = false
+        EscapeFrame.Position = UDim2.new(1, 0, 0.8, 0) -- Đưa menu ra ngoài màn hình
+    end)
+end
+
+-- Kết nối sự kiện nhân vật hồi sinh
+player.CharacterAdded:Connect(onCharacterAdded)
+
+-- Thiết lập sự kiện cho humanoid hiện tại
+humanoid.HealthChanged:Connect(checkHealth)
+humanoid.Died:Connect(function()
+    displayed = false
+    EscapeFrame.Position = UDim2.new(1, 0, 0.8, 0) -- Đưa menu ra ngoài màn hình
+end)
+
+-- Sự kiện khi bấm nút Escape
+EscapeButton.MouseButton1Click:Connect(activateEscape)
