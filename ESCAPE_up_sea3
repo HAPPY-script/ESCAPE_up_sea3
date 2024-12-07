@@ -99,3 +99,60 @@ end)
 
 -- Sự kiện khi bấm nút Escape
 EscapeButton.MouseButton1Click:Connect(activateEscape)
+
+-- update UP
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+
+local teleportCoordinates = {
+    Vector3.new(5315.46, 24.31, -134.44),
+    Vector3.new(-12463.60, 376.29, -7566.08),
+}
+
+local lungeSpeed = 10000
+local isLunging = false
+
+-- Hàm lướt lên cao
+local function performLunge()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    
+    isLunging = true
+    while isLunging do
+        humanoidRootPart.CFrame = humanoidRootPart.CFrame + Vector3.new(0, lungeSpeed * RunService.Heartbeat:Wait(), 0)
+        task.wait()
+    end
+end
+
+
+local function monitorHealth()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    
+    humanoid.HealthChanged:Connect(function(health)
+        if health / humanoid.MaxHealth <= 0.2 and not isLunging then
+            
+            performLunge()
+        elseif health / humanoid.MaxHealth > 0.2 and isLunging then
+            
+            isLunging = false
+            local randomIndex = math.random(1, #teleportCoordinates)
+            local randomCoord = teleportCoordinates[randomIndex]
+            character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(randomCoord)
+        end
+    end)
+end
+
+
+player.CharacterAdded:Connect(function()
+    task.wait(1) -- nhân vật load
+    monitorHealth()
+end)
+
+
+if player.Character then
+    monitorHealth()
+end
