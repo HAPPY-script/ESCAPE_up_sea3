@@ -130,10 +130,10 @@ local function monitorHealth()
     local humanoid = character:WaitForChild("Humanoid")
     
     humanoid.HealthChanged:Connect(function(health)
-        if health / humanoid.MaxHealth <= 0.2 and not isLunging then
+        if health / humanoid.MaxHealth <= 0.3 and not isLunging then
             
             performLunge()
-        elseif health / humanoid.MaxHealth > 0.2 and isLunging then
+        elseif health / humanoid.MaxHealth > 0.3 and isLunging then
             
             isLunging = false
             local randomIndex = math.random(1, #teleportCoordinates)
