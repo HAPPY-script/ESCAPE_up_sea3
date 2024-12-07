@@ -61,10 +61,7 @@ end
 local function checkHealth()
     local healthRatio = humanoid.Health / humanoid.MaxHealth
 
-    if healthRatio < 0.2 and humanoid.Health > 0 then
-        -- Tự động thoát hiểm khi máu dưới 20%
-        activateEscape()
-    elseif healthRatio < 0.5 and humanoid.Health > 0 and not displayed then
+    if healthRatio < 0.5 and humanoid.Health > 0 and not displayed then
         -- Hiển thị menu thoát hiểm bằng hiệu ứng trượt khi máu dưới 50%
         displayed = true
         EscapeFrame:TweenPosition(UDim2.new(0.75, 0, 0.8, 0), "Out", "Quad", 0.5, true)
@@ -108,8 +105,8 @@ local player = Players.LocalPlayer
 
 
 local teleportCoordinates = {
-    Vector3.new(5315.46, 24.31, -134.44),
     Vector3.new(-12463.60, 376.29, -7566.08),
+    Vector3.new(5315.46, 24.31, -134.44),
 }
 
 local lungeSpeed = 10000
