@@ -43,8 +43,8 @@ local displayed = false -- Đánh dấu trạng thái hiển thị của menu
 
 -- Hàm thoát hiểm
 local function activateEscape()
-    local pos1 = Vector3.new(-12463.60, 376.29, -7566.08)
-    local pos2 = Vector3.new(5315.46, 24.31, -134.44)
+    local pos1 = Vector3.new(-5089.63, 318.33, -3146.13)
+    local pos2 = Vector3.new(5369.02, 33.73, -497.11)
     local playerPos = character:WaitForChild("HumanoidRootPart").Position
 
     -- Tính khoảng cách tới từng vị trí và chọn vị trí xa nhất
@@ -104,8 +104,10 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 local teleportCoordinates = {
-    Vector3.new(5315.46, 24.31, -134.44),
-    Vector3.new(-12463.60, 376.29, -7566.08),
+    Vector3.new(-5089.63, 318.33, -3146.13),
+    Vector3.new(-12463.60, 378.16, -7566.08),
+    Vector3.new(5369.02, 33.73, -497.11),
+    Vector3.new(-11992.56, 333.66, -9027.20)
 }
 
 local lungeSpeed = 10000
