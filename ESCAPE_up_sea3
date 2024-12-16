@@ -103,55 +103,80 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
-local teleportCoordinates = {
-    Vector3.new(-5089.63, 318.33, -3146.13),
-    Vector3.new(-12463.60, 378.16, -7566.08),
-    Vector3.new(5369.02, 33.73, -497.11),
-    Vector3.new(-11992.56, 333.66, -9027.20)
-}
-
-local lungeSpeed = 10000
-local isLunging = false
+local lungeSpeed = 10000 -- Tốc độ lướt ban đầu
+local minSpeed = 500 -- Tốc độ tối thiểu khi giảm tốc
+local stopDistance = 10 -- Khoảng cách dừng chính xác
+local slowDownDistance = 200 -- Khoảng cách bắt đầu giảm tốc
+local isLungingUp = false
+local isLungingDown = false
+local originalPosition = nil
 
 -- Hàm lướt lên cao
-local function performLunge(character)
+local function performLungeUp(character)
     local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-    isLunging = true
-    while isLunging do
+    isLungingUp = true
+    originalPosition = humanoidRootPart.Position -- Lưu tọa độ ban đầu
+    while isLungingUp do
         humanoidRootPart.CFrame = humanoidRootPart.CFrame + Vector3.new(0, lungeSpeed * RunService.Heartbeat:Wait(), 0)
     end
 end
 
+-- Hàm lướt xuống vị trí cũ
+local function performLungeDown(character)
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    if originalPosition then
+        isLungingDown = true
+        local targetPosition = originalPosition + Vector3.new(0, 700, 0) -- Tọa độ mục tiêu
+        while isLungingDown do
+            local currentPosition = humanoidRootPart.Position
+            local direction = (targetPosition - currentPosition).unit -- Hướng di chuyển
+            local distance = (targetPosition - currentPosition).magnitude
+            
+            -- Kiểm tra khoảng cách để giảm tốc độ
+            local currentSpeed = lungeSpeed
+            if distance < slowDownDistance then
+                currentSpeed = math.max(minSpeed, lungeSpeed * (distance / slowDownDistance)) -- Giảm tốc dần
+            end
 
+            -- Dừng khi tới vị trí mục tiêu
+            if distance <= stopDistance then
+                humanoidRootPart.CFrame = CFrame.new(targetPosition)
+                isLungingDown = false
+                break
+            end
+            
+            humanoidRootPart.CFrame = humanoidRootPart.CFrame + (direction * currentSpeed * RunService.Heartbeat:Wait())
+        end
+        originalPosition = nil -- Reset vị trí sau khi hoàn thành
+    end
+end
+
+-- Theo dõi trạng thái máu
 local function monitorHealth(character)
     local humanoid = character:WaitForChild("Humanoid")
     
     humanoid.HealthChanged:Connect(function(health)
         local healthRatio = health / humanoid.MaxHealth
         
-        if healthRatio <= 0.3 and health > 0 and not isLunging then
-            
-            performLunge(character)
-        elseif healthRatio > 0.3 and isLunging then
-            
-            isLunging = false
-            local randomIndex = math.random(1, #teleportCoordinates)
-            local targetPos = teleportCoordinates[randomIndex]
-            character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetPos)
+        if healthRatio <= 0.3 and health > 0 and not isLungingUp then
+            performLungeUp(character) -- Lướt lên cao khi máu <= 30%
+        elseif healthRatio > 0.3 and isLungingUp then
+            isLungingUp = false
+            performLungeDown(character) -- Lướt xuống vị trí cũ khi máu > 30%
         end
     end)
 end
 
-
+-- Xử lý khi nhân vật xuất hiện
 local function onCharacterAdded(character)
-    task.wait(1) 
+    task.wait(1) -- Đợi nhân vật load hoàn tất
     monitorHealth(character)
 end
 
-
+-- Kết nối sự kiện nhân vật hồi sinh
 player.CharacterAdded:Connect(onCharacterAdded)
 
-
+-- Gọi hàm nếu nhân vật đã tồn tại
 if player.Character then
     onCharacterAdded(player.Character)
 end
